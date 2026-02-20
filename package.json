@@ -1,0 +1,20 @@
+{
+  "name": "backproj_01",
+  "version": "1.0.0",
+  "description": "first backend project",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "keywords": [
+    "backend",
+    "first",
+    "api",
+    "creation"
+  ],
+  "author": "Aryan Duhan",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "3.8.1"
+  }
+}
