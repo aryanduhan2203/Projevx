@@ -1,5 +1,6 @@
 import express from "express";
-import cors from "cors"
+import cors from "cors";
+
 
 const app = express();
 
@@ -16,7 +17,12 @@ app.use(
     methods: ["GET","POST","PATCH","DELETE","OPTIONS"],
     allowedHeaders:["Content-Type","Authorization"],
     })
-)
+);
+
+//import the routes
+import  healthCheckRouter  from "./routes/healthCheck.routes.js";
+
+app.use("/api/v1/healthCheck",healthCheckRouter);
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
