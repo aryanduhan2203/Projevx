@@ -10,14 +10,13 @@ const userRegisterValidator = () => {
       .withMessage("Email is invalid"),
     body("username")
       .trim()
-      .isEmpty()
+      .notEmpty()
       .withMessage("username is required")
       .isLowercase()
       .withMessage("username must be in lowercase")
       .isLength({ min: 3 })
       .withMessage("username must be three character long"),
     body("password").trim().notEmpty().withMessage("Password is required"),
-    body("fullName").optional().trim(),
   ];
 };
 
@@ -28,4 +27,32 @@ const userLoginValidator = () => {
   ];
 };
 
-export { userRegisterValidator, userLoginValidator };
+const userChangeCurrentPasswordValidator = () => {
+  return [
+    body("oldPassword").notEmpty().withMessage("old password is required"),
+    body("newPassword").notEmpty().withMessage("new Password is required"),
+  ];
+};
+
+const userForgotPasswordValidator = () => {
+  return [
+    body("email")
+      .notEmpty()
+      .withMessage("email is required")
+      .isEmail()
+      .withMessage("Email is invalid"),
+  ];
+};
+
+const userResetForgotValidator = () => {
+  return[
+    body("newPassword").notEmpty().withMessage("password is required")
+  ];
+};
+export {
+  userRegisterValidator,
+  userLoginValidator,
+  userChangeCurrentPasswordValidator,
+  userForgotPasswordValidator,
+  userResetForgotValidator,
+};
