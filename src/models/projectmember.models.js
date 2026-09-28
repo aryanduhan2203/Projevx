@@ -19,4 +19,7 @@ const projectMemberSchema = new Schema({
     }
 },{timestamps:true})
 
+// one membership per user per project
+projectMemberSchema.index({ user: 1, project: 1 }, { unique: true });
+
 export const ProjectMember = mongoose.model("ProjectMember",projectMemberSchema);

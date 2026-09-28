@@ -7,6 +7,18 @@ import { asyncHandler } from "../utils/async-handler.js";
 import mongoose from "mongoose";
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js";
 
+// A project must always keep at least one admin
+const assertNotLastAdmin = async (projectId, projectMember) => {
+  if (projectMember.role !== UserRolesEnum.ADMIN) return;
+  const adminCount = await ProjectMember.countDocuments({
+    project: projectId,
+    role: UserRolesEnum.ADMIN,
+  });
+  if (adminCount <= 1) {
+    throw new ApiError(400, "A project must have at least one admin");
+  }
+};
+
 const getProjects = asyncHandler(async (req, res) => {
   const projects = await ProjectMember.aggregate([
     {
@@ -111,10 +123,12 @@ const updateProject = asyncHandler(async (req, res) => {
 });
 const deleteProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const project = await Project.findByIdAndDelete(project);
+  const project = await Project.findByIdAndDelete(projectId);
   if (!project) {
     throw new ApiError(404, "Project not found");
   }
+  // cascade: remove memberships so no orphan records are left behind
+  await ProjectMember.deleteMany({ project: projectId });
   return res
     .status(200)
     .json(new ApiResponse(200, project, "Project deleted successfully"));
@@ -128,20 +142,14 @@ const addMembersToProject = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
-  await ProjectMember.findByIdAndUpdate(
+  // findOneAndUpdate + upsert: adds the member, or updates their role if already added
+  await ProjectMember.findOneAndUpdate(
     {
       user: new mongoose.Types.ObjectId(user._id),
       project: new mongoose.Types.ObjectId(projectId),
     },
-    {
-      user: new mongoose.Types.ObjectId(user._id),
-      project: new mongoose.Types.ObjectId(projectId),
-      role: role,
-    },
-    {
-      new: true,
-      upsert: true,
-    },
+    { $set: { role: role || UserRolesEnum.MEMBER } },
+    { new: true, upsert: true },
   );
 
   return res
@@ -150,10 +158,10 @@ const addMembersToProject = asyncHandler(async (req, res) => {
 });
 const getProjectMembers = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const project = await Project.findById(req.params);
+  const project = await Project.findById(projectId);
 
   if (!project) {
-    throw new ApiError("Project not found");
+    throw new ApiError(404, "Project not found");
   }
 
   const projectMembers = await ProjectMember.aggregate([
@@ -216,7 +224,10 @@ const updateMembeRole = asyncHandler(async (req, res) => {
     user: new mongoose.Types.ObjectId(userId),
   });
   if (!projectMember) {
-    throw new ApiError(400, "project member not found");
+    throw new ApiError(404, "project member not found");
+  }
+  if (newRole !== UserRolesEnum.ADMIN) {
+    await assertNotLastAdmin(projectId, projectMember);
   }
   projectMember = await ProjectMember.findByIdAndUpdate(
     projectMember._id,
@@ -226,7 +237,7 @@ const updateMembeRole = asyncHandler(async (req, res) => {
     { new: true },
   );
   if (!projectMember) {
-    throw new ApiError("project member not found");
+    throw new ApiError(404, "project member not found");
   }
   return res
     .status(200)
@@ -246,8 +257,9 @@ const deleteMember = asyncHandler(async (req, res) => {
     user: new mongoose.Types.ObjectId(userId),
   });
   if (!projectMember) {
-    throw new ApiError(400, "project member not found");
+    throw new ApiError(404, "project member not found");
   }
+  await assertNotLastAdmin(projectId, projectMember);
   projectMember = await ProjectMember.findByIdAndDelete(projectMember._id);
   if (!projectMember) {
     throw new ApiError(400, "project member not found");

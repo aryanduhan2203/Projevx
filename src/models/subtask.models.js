@@ -1,8 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 
 const subTaskSchema = new Schema({
-    titles: {
-        types: String,
+    title: {
+        type: String,
         required: true,
         trim: true,
     },
@@ -12,7 +12,7 @@ const subTaskSchema = new Schema({
         required: true
     },
     isCompleted: {
-        type: Bollean,
+        type: Boolean,
         default: false
     },
     createdBy: {

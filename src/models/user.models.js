@@ -45,10 +45,10 @@ const userSchema = new Schema(
         refreshToken: {
             type: String
         },
-        forgotPassordToken: {
+        forgotPasswordToken: {
             type: String
         },
-        forgotPassordExpiry: {
+        forgotPasswordExpiry: {
             type: Date
         },
         emailVerificationToken: {
